@@ -1,0 +1,179 @@
+<!-- Guarda este archivo como login.html -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login sencillo</title>
+  <style>
+    /* Estilo limpio y centrado */
+    :root { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg,#f5f7fb,#e9eef9);
+    }
+    .card {
+      width: 360px;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(20,30,60,0.12);
+      background: #fff;
+    }
+    h1 { margin: 0 0 12px; font-size: 20px; }
+    p.sub { margin: 0 0 18px; color: #556; font-size: 14px; }
+    label { display:block; font-size:13px; margin-bottom:6px; color:#334; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #d9e0ef;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    .row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:12px;
+    }
+    button {
+      width:100%;
+      padding: 10px 12px;
+      background: #1f6feb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    .msg { margin-top:12px; font-size:14px; color:#b00020; min-height:18px; }
+    .success {
+      color: #0a7a3a;
+    }
+    .small {
+      font-size: 13px;
+      color:#667;
+    }
+    .toggle-pass {
+      background: none;
+      border: none;
+      color:#1f6feb;
+      cursor:pointer;
+      font-size:13px;
+      padding:0;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Acceso</h1>
+    <p class="sub">Introduce usuario y contraseña para iniciar sesión.</p>
+
+    <form id="loginForm" autocomplete="off" novalidate>
+      <label for="username">Usuario</label>
+      <input id="username" name="username" type="text" inputmode="text" required autocomplete="username" placeholder="usuario" />
+
+      <label for="password">Contraseña</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="contraseña" style="flex:1;" />
+        <button type="button" class="toggle-pass" id="togglePass" aria-pressed="false" title="Mostrar contraseña">mostrar</button>
+      </div>
+
+      <div class="row">
+        <label class="small"><input id="remember" type="checkbox" /> Recuérdame</label>
+        <a href="#" class="small" onclick="alert('En este demo no hay recuperación.'); return false;">¿Olvidaste?</a>
+      </div>
+
+      <button type="submit">Entrar</button>
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script>
+    // Credenciales de ejemplo (demo). Cambia o reemplaza con llamada a backend.
+    const VALID_USERS = [
+      { user: 'admin', pass: '1234' },
+      { user: 'chisus', pass: 'pass' }
+    ];
+
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('msg');
+    const toggle = document.getElementById('togglePass');
+    const passwordInput = document.getElementById('password');
+
+    // Mostrar/ocultar contraseña
+    toggle.addEventListener('click', () => {
+      const showing = passwordInput.type === 'text';
+      passwordInput.type = showing ? 'password' : 'text';
+      toggle.textContent = showing ? 'mostrar' : 'ocultar';
+      toggle.setAttribute('aria-pressed', String(!showing));
+    });
+
+    // Guarda usuario en localStorage si "Recuérdame"
+    function rememberUser(username) {
+      const chk = document.getElementById('remember');
+      if (chk.checked) localStorage.setItem('savedUser', username);
+      else localStorage.removeItem('savedUser');
+    }
+
+    // Si hay usuario guardado, prefílalo
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('savedUser');
+      if (saved) document.getElementById('username').value = saved;
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.classList.remove('success');
+
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+
+      if (!user || !pass) {
+        msg.textContent = 'Completa usuario y contraseña.';
+        return;
+      }
+
+      // Validación simple en cliente
+      const ok = VALID_USERS.some(u => u.user === user && u.pass === pass);
+
+      if (ok) {
+        rememberUser(user);
+        msg.textContent = 'Inicio correcto. Bienvenido ' + user + '!';
+        msg.classList.add('success');
+
+        // Simular "redirección" a panel: reemplazar contenido por mensaje de bienvenida
+        setTimeout(() => {
+          document.body.innerHTML = `
+            <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+              <div style="text-align:center;">
+                <h2>Bienvenido, ${escapeHtml(user)} 👋</h2>
+                <p style="color:#445;">Has iniciado sesión correctamente (demo local).</p>
+                <button id="logout">Cerrar sesión</button>
+              </div>
+            </main>
+          `;
+          document.getElementById('logout').addEventListener('click', () => {
+            localStorage.removeItem('savedUser');
+            location.reload();
+          });
+        }, 700);
+      } else {
+        msg.textContent = 'Usuario o contraseña incorrectos.';
+      }
+    });
+
+    // pequeña función para prevenir XSS al renderizar nombre
+    function escapeHtml(str) {
+      return str.replace(/[&<>"'`=\/]/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;' })[s]);
+    }
+  </script>
+</body>
+</html>
