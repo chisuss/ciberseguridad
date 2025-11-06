@@ -7,7 +7,7 @@ def main():
 
 @app.route('/login')
 def login():
-    return render_template('login.html')
+    return render_template('login.html') 
 
 @app.route("/clave/<miclave>")
 def clave(miclave):

